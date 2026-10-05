@@ -1,5 +1,5 @@
 {
-  "name": "rip-and-tint",
+  "name": "led-doom",
   "private": true,
   "description": "Doom on one RGB LED and one button.",
   "scripts": {

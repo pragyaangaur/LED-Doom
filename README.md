@@ -1,8 +1,8 @@
-# Rip and Tint
+# LED Doom
 
 The first episode of Doom, played on a single RGB LED with a single button. The whole game state collapses to one colour per frame, and the whole input collapses to whether the button is down.
 
-**Play it in the browser: https://pragyaangaur.github.io/Rip-And-Tint/**
+**Play it in the browser: https://pragyaangaur.github.io/LED-Doom/**
 
 The game runs in two places. `web/` is a browser version with a drawn LED and a drawn button. `arduino/doom_led/` is the same game for a real LED and a real button on an Arduino Uno, Nano or ESP32.
 
