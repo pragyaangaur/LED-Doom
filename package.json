@@ -1,0 +1,9 @@
+{
+  "name": "rip-and-tint",
+  "private": true,
+  "description": "Doom on one RGB LED and one button.",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "start": "python3 -m http.server 8417 -d web"
+  }
+}
