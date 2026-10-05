@@ -4,6 +4,10 @@ The first episode of Doom, played on a single RGB LED with a single button. The 
 
 **Play it in the browser: https://pragyaangaur.github.io/LED-Doom/**
 
+![Five seconds of play. A shotgun guy is shot down, a door opens and an imp is killed, while the LED beside the screen turns blue, red, green and purple.](docs/gameplay.gif)
+
+The GIF is five seconds of the real game played by the test bot, which watches only the LED. The screen on the left shows what the game looks like from inside, and the light on the right is everything the player actually gets.
+
 The game runs in two places. `web/` is a browser version with a drawn LED and a drawn button. `arduino/doom_led/` is the same game for a real LED and a real button on an Arduino Uno, Nano or ESP32.
 
 The page also has a screen. It draws a 320 by 200 first-person view of whatever the LED is doing. You see the corridor you are walking down, and the imp in front of you winding up a fireball. You also see the shotgun, the door sliding open, and a status bar with your health and a face that gets bloodier. The screen only reads the game and never changes it, so the LED is still the whole game, and the screen is there to show that it really is Doom. It can be switched off for LED-only play. All the art is drawn in code from small bitmaps, so none of it comes from id Software.
