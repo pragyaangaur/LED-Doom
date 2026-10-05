@@ -1,0 +1,416 @@
+<title>Rip and Tint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* A CRT on a dark bench, with the one LED and the one button sitting in front of it.
+     The LED is the game; the screen is the view from inside it. The LED colour spills onto the page. */
+  :root {
+    --void: #0b0a0c;
+    --bench: #151317;
+    --bezel: #1d1b1f;
+    --ink: #d9d3cc;
+    --dim: #8a8189;
+    --rule: #2a262c;
+    --uac: #c8a24a;
+    --live: #4fd26a;
+    --glow: 0, 0, 0;
+    --display: 'Big Shoulders Display', 'Arial Narrow', Impact, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.55;
+    padding-inline: 16px;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(60vmax 50vmax at 50% 78%, rgba(var(--glow), 0.14), transparent 70%);
+  }
+  main {
+    position: relative;
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-block: 20px 40px;
+  }
+  header { text-align: center; display: grid; gap: 4px; }
+  h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: clamp(36px, 8vw, 52px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .sub { margin: 0; color: var(--dim); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* the monitor */
+  .monitor {
+    width: min(100%, 560px);
+    padding: 14px;
+    border-radius: 14px;
+    background: linear-gradient(160deg, #262328, var(--bezel));
+    box-shadow: 0 18px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .monitor[hidden] { display: none; }
+  .glass { position: relative; border-radius: 8px; overflow: hidden; background: #000; aspect-ratio: 320 / 200; max-width: 100%; }
+  .glass canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .glass::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,0.18) 0 1px, transparent 1px 3px);
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.7);
+  }
+  .monitor-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; font-size: 11px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
+  .source { display: inline-flex; align-items: center; gap: 8px; }
+  .source::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+  .source.board::before { background: var(--live); box-shadow: 0 0 8px var(--live); }
+
+  /* the bench: LED on the left, button on the right */
+  .bench { display: flex; align-items: flex-end; justify-content: center; gap: 56px; flex-wrap: wrap; }
+  .part { display: grid; justify-items: center; gap: 10px; }
+  .part-label { font-size: 11px; color: var(--dim); letter-spacing: 0.14em; text-transform: uppercase; }
+  .led-wrap { display: grid; justify-items: center; }
+  .led {
+    position: relative;
+    width: 64px;
+    height: 86px;
+    border-radius: 32px 32px 5px 5px;
+    background:
+      radial-gradient(26px 34px at 34% 28%, rgba(255,255,255,0.22), transparent 70%),
+      radial-gradient(48px 56px at 50% 55%, rgba(var(--glow), 0.95), rgba(var(--glow), 0.35) 60%, rgba(40,36,44,0.9) 100%),
+      #1c1a1f;
+    box-shadow: 0 0 18px 4px rgba(var(--glow), 0.55), 0 0 70px 24px rgba(var(--glow), 0.26), inset 0 -8px 14px rgba(0,0,0,0.45);
+  }
+  .led::after {
+    content: '';
+    position: absolute;
+    left: -6px; right: -6px; bottom: -8px;
+    height: 9px;
+    border-radius: 3px;
+    background: linear-gradient(#2a272d, #1a181c);
+  }
+  .legs { display: flex; gap: 16px; margin-top: 8px; }
+  .legs span { width: 3px; background: linear-gradient(#77707a, #4a454d); }
+  .legs span:first-child { height: 40px; }
+  .legs span:last-child { height: 48px; }
+
+  .switch {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    width: 112px;
+    height: 112px;
+    border-radius: 16px;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    background: linear-gradient(145deg, #2c2930, #19171b);
+    box-shadow: 0 6px 0 #070608, 0 10px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+    display: grid;
+    place-items: center;
+    transition: transform 40ms, box-shadow 40ms;
+  }
+  .switch .cap {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #3b3740, #141216 75%);
+    box-shadow: 0 3px 0 #060507, inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .switch.down { transform: translateY(5px); box-shadow: 0 1px 0 #070608, 0 4px 10px rgba(0,0,0,0.6); }
+  .switch.down .cap { box-shadow: inset 0 2px 6px rgba(0,0,0,0.6); }
+  .switch:disabled { cursor: not-allowed; opacity: 0.45; }
+  .switch:focus-visible { outline: 2px solid var(--uac); outline-offset: 6px; }
+  .hint { margin: -8px 0 0; color: var(--dim); font-size: 12px; text-align: center; max-width: 52ch; }
+  kbd { font-family: var(--mono); border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--ink); }
+
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .bar button {
+    font: 500 12px var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .bar button[aria-pressed="true"] { color: var(--ink); border-color: var(--dim); }
+  .bar button.primary { color: var(--void); background: var(--uac); border-color: var(--uac); }
+  .bar button.primary.on { color: var(--live); background: transparent; border-color: var(--live); }
+  .bar button:focus-visible { outline: 2px solid var(--uac); outline-offset: 2px; }
+  .note { margin: -10px 0 0; font-size: 12px; color: var(--dim); text-align: center; max-width: 60ch; min-height: 1.55em; }
+  .note.error { color: #e0776b; }
+
+  .key {
+    width: 100%;
+    border-top: 1px solid var(--rule);
+    padding-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px 24px;
+  }
+  .key h2 {
+    grid-column: 1 / -1;
+    margin: 0 0 4px;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--uac);
+  }
+  .row { display: grid; grid-template-columns: 14px 1fr; gap: 10px; align-items: start; min-width: 0; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; }
+  .row b { font-weight: 500; }
+  .row span { color: var(--dim); }
+
+  .foot { margin: 0; font-size: 12px; color: var(--dim); text-align: center; }
+  .foot a { color: var(--uac); text-underline-offset: 3px; }
+  .foot a:focus-visible { outline: 2px solid var(--uac); outline-offset: 2px; }
+
+  @media (max-width: 480px) { .bench { gap: 32px; } }
+  @media (prefers-reduced-motion: reduce) { .switch { transition: none; } }
+</style>
+
+<main>
+  <header>
+    <h1>Rip and Tint</h1>
+    <p class="sub">Doom on 1 LED &middot; 1 button &middot; Knee Deep in the Dead</p>
+  </header>
+
+  <section class="monitor" id="monitor" aria-label="The view from inside the game">
+    <div class="glass"><canvas id="screen" width="320" height="200"></canvas></div>
+    <div class="monitor-foot">
+      <span class="source" id="source">Playing in this browser</span>
+      <span>320 &times; 200</span>
+    </div>
+  </section>
+
+  <div class="bench">
+    <div class="part">
+      <div class="led-wrap" aria-hidden="true">
+        <div class="led"></div>
+        <div class="legs"><span></span><span></span></div>
+      </div>
+      <span class="part-label">The game</span>
+    </div>
+    <div class="part">
+      <button class="switch" id="switch" type="button" aria-label="The only button. Hold to walk, tap to shoot, pick up and open doors.">
+        <span class="cap"></span>
+      </button>
+      <span class="part-label">The controller</span>
+    </div>
+  </div>
+  <p class="hint" id="hint">Press to start. Mouse, touch, or <kbd>Space</kbd>.</p>
+
+  <div class="bar">
+    <button type="button" id="board" class="primary">Connect Arduino</button>
+    <button type="button" id="screen-toggle" aria-pressed="true">Screen on</button>
+    <button type="button" id="sound" aria-pressed="true">Sound on</button>
+  </div>
+  <p class="note" id="note" aria-live="polite"></p>
+
+  <section class="key" aria-label="What the colours mean">
+    <h2>Reading the light</h2>
+    <div class="row"><i class="dot" style="background:rgb(0,90,255)"></i><div><b>Blue</b> <span>corridor. Hold to walk. Dimmer blue means less health.</span></div></div>
+    <div class="row"><i class="dot" style="background:rgb(255,0,0)"></i><div><b>Red</b> <span>enemy. Tap to shoot. It swells before it hits you. A faint red is a spectre.</span></div></div>
+    <div class="row"><i class="dot" style="background:rgb(0,255,40)"></i><div><b>Green</b> <span>your shot landed. A long green is a kill.</span></div></div>
+    <div class="row"><i class="dot" style="background:rgb(255,180,0)"></i><div><b>Yellow</b> <span>health. Tap before it fades.</span></div></div>
+    <div class="row"><i class="dot" style="background:rgb(190,0,255)"></i><div><b>Purple</b> <span>door. Tap to open it.</span></div></div>
+    <div class="row"><i class="dot" style="background:#fff"></i><div><b>White</b> <span>level done. It blinks the next map number.</span></div></div>
+    <div class="row"><i class="dot" style="background:#000;border:1px solid var(--rule)"></i><div><b>Off</b> <span>dead. Hold for a second to retry the map.</span></div></div>
+  </section>
+
+  <p class="foot">Wiring, the Arduino and ESP32 sketch, and the tests are on <a href="https://github.com/pragyaangaur/Rip-And-Tint">GitHub</a>.</p>
+</main>
+
+<script src="game.js"></script>
+<script src="serial.js"></script>
+<script src="screen.js"></script>
+<script>
+(function () {
+  'use strict';
+  const { Game } = window.DoomLED;
+  const Serial = window.DoomSerial;
+  const Screen = window.DoomScreen;
+  const sw = document.getElementById('switch');
+  const hint = document.getElementById('hint');
+  const note = document.getElementById('note');
+  const sourceEl = document.getElementById('source');
+  const monitor = document.getElementById('monitor');
+  const canvas = document.getElementById('screen');
+  const ctx2d = canvas.getContext('2d');
+  const rootStyle = document.documentElement.style;
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  };
+  function say(text, error) { note.textContent = text; note.classList.toggle('error', !!error); }
+
+  // ---- sound: a few synthesised effects, made only after the first press ----
+  let audio = null;
+  let soundOn = store.get('doomled.sound') !== 'off';
+  function ctx() {
+    if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audio = null; } }
+    if (audio && audio.state === 'suspended') audio.resume();
+    return audio;
+  }
+  function tone(freq, dur, type, vol, slide) {
+    const a = soundOn && ctx(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur);
+  }
+  function noise(dur, vol, cutoff) {
+    const a = soundOn && ctx(); if (!a) return;
+    const n = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    s.buffer = buf; f.type = 'lowpass'; f.frequency.value = cutoff; g.gain.value = vol;
+    s.connect(f).connect(g).connect(a.destination); s.start();
+  }
+  const sfx = {
+    shot: () => noise(0.12, 0.5, 1800),
+    kill: () => { noise(0.3, 0.45, 700); tone(160, 0.3, 'sawtooth', 0.12, 50); },
+    pain: () => tone(110, 0.16, 'square', 0.15, 70),
+    pickup: () => { tone(660, 0.07, 'square', 0.08); setTimeout(() => tone(990, 0.1, 'square', 0.08), 70); },
+    door: () => tone(70, 0.6, 'sawtooth', 0.12, 140),
+    exit: () => [262, 330, 392, 523].forEach((f, i) => setTimeout(() => tone(f, 0.14, 'square', 0.08), i * 110)),
+    death: () => tone(300, 1.1, 'sawtooth', 0.16, 40),
+    enemy: () => tone(180, 0.12, 'triangle', 0.12, 240),
+    victory: () => [392, 523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, 0.22, 'square', 0.08), i * 160)),
+  };
+  const onEvent = (e) => { if (sfx[e.type]) sfx[e.type](); };
+
+  // ---- two sources: the game running here, or a mirror of the one on the Arduino ----
+  let game = null;   // the local game, made on the first press
+  let board = null;  // { link, mirror, prev } while an Arduino is connected
+  const live = () => (board && board.prev ? board.mirror : game);
+
+  let down = false;
+  function setDown(v) {
+    if (board) return; // the Arduino's own button is in charge
+    if (v && !game) { game = new Game({ onEvent }); hint.textContent = 'Hold to walk. Tap at everything else.'; ctx(); }
+    down = v;
+    sw.classList.toggle('down', v);
+  }
+  sw.addEventListener('pointerdown', (e) => { e.preventDefault(); sw.setPointerCapture(e.pointerId); setDown(true); });
+  sw.addEventListener('pointerup', () => setDown(false));
+  sw.addEventListener('pointercancel', () => setDown(false));
+  sw.addEventListener('contextmenu', (e) => e.preventDefault());
+  window.addEventListener('keydown', (e) => {
+    if (e.code !== 'Space' && e.code !== 'Enter') return;
+    if (e.target.closest && e.target.closest('.bar')) return;
+    e.preventDefault();
+    if (!e.repeat) setDown(true);
+  });
+  window.addEventListener('keyup', (e) => { if (e.code === 'Space' || e.code === 'Enter') setDown(false); });
+  window.addEventListener('blur', () => setDown(false));
+
+  // ---- Arduino over Web Serial ----
+  const boardBtn = document.getElementById('board');
+  function paintBoard() {
+    boardBtn.textContent = board ? 'Disconnect Arduino' : 'Connect Arduino';
+    boardBtn.classList.toggle('on', !!board);
+    sourceEl.textContent = board ? 'Showing the Arduino' : 'Playing in this browser';
+    sourceEl.classList.toggle('board', !!board);
+    sw.disabled = !!board;
+    if (board) hint.textContent = 'Play with the button on your breadboard. This screen follows the board.';
+    else hint.textContent = game ? 'Hold to walk. Tap at everything else.' : 'Press to start. Mouse, touch, or Space.';
+  }
+  async function disconnect() {
+    const b = board;
+    board = null;
+    paintBoard();
+    if (b) await b.link.close().catch(() => {});
+  }
+  boardBtn.addEventListener('click', async () => {
+    if (board) { await disconnect(); say('Disconnected. You are playing in the browser again.'); return; }
+    if (!('serial' in navigator)) {
+      say('Connecting an Arduino needs Chrome or Edge on a computer. Safari and Firefox cannot talk to USB devices.', true);
+      return;
+    }
+    ctx();
+    setDown(false);
+    try {
+      const b = { mirror: new Game(), prev: null };
+      b.link = await Serial.connect({
+        onSnapshot(snap) {
+          if (board !== b) return;
+          for (const e of Serial.snapshotEvents(b.prev, snap)) onEvent(e);
+          Serial.applySnapshot(b.mirror, snap);
+          b.prev = snap;
+        },
+        onStatus(s) {
+          if (board !== b) return;
+          if (s === 'disconnected' || s.startsWith('lost')) { disconnect(); say('The Arduino went away. You are playing in the browser again.', true); }
+          else if (s === 'connected') say('Connected. The board restarts when the port opens, so the game starts from E1M1.');
+        },
+      });
+      board = b;
+      paintBoard();
+    } catch (e) {
+      if (e && e.name === 'NotFoundError') say('No port picked.');
+      else if (e && e.name === 'SecurityError') say('This copy of the page is not allowed to reach USB. Open the GitHub Pages copy or run npm start, in Chrome or Edge.', true);
+      else say('Could not open the port: ' + (e && e.message ? e.message : e) + '. Close the Arduino IDE serial monitor if it is open.', true);
+    }
+  });
+
+  // ---- toggles ----
+  const soundBtn = document.getElementById('sound');
+  function paintSound() { soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off'; }
+  soundBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('doomled.sound', soundOn ? 'on' : 'off'); paintSound(); });
+  paintSound();
+  const screenBtn = document.getElementById('screen-toggle');
+  function paintScreen(on) { monitor.hidden = !on; screenBtn.setAttribute('aria-pressed', String(on)); screenBtn.textContent = on ? 'Screen on' : 'Screen off (LED only)'; }
+  screenBtn.addEventListener('click', () => { const on = monitor.hidden; paintScreen(on); store.set('doomled.screen', on ? 'on' : 'off'); });
+  paintScreen(store.get('doomled.screen') !== 'off');
+
+  function boot() {
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(50, now - last);
+      last = now;
+      if (game && !board) game.update(dt, down);
+      const g = live();
+      let c;
+      if (g && (game || board)) {
+        c = g.color();
+        if (!monitor.hidden) Screen.draw(ctx2d, g, c);
+      } else {
+        const k = 0.18 + 0.12 * Math.sin(now / 700); // waiting to start
+        c = [255 * k, 255 * k, 255 * k].map(Math.round);
+        if (!monitor.hidden) Screen.title(ctx2d, now);
+      }
+      rootStyle.setProperty('--glow', c.join(', '));
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  boot();
+})();
+</script>
