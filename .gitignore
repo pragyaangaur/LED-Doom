@@ -2,3 +2,6 @@ node_modules/
 .DS_Store
 .claude/
 build/
+
+# Agent notes, kept local
+AGENTS.md
