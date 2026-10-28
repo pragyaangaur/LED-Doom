@@ -2,7 +2,7 @@
 
 The first episode of Doom, played on a single RGB LED with a single button. The whole game state collapses to one colour per frame, and the whole input collapses to whether the button is down.
 
-**Play it in the browser: https://pragyaangaur.github.io/LED-Doom/**
+**Play it in the browser: https://pragyaangaur.dev/LED-Doom/**
 
 ![Five seconds of play. A shotgun guy is shot down, a door opens and an imp is killed, while the LED beside the screen turns blue, red, green and purple.](docs/gameplay.gif)
 
